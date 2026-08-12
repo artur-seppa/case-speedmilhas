@@ -1,0 +1,51 @@
+name: speedmilhas-desafio
+
+# O compose sobe apenas a infraestrutura: banco e fornecedores mock.
+# A `api` e o `web` você roda no host, com npm — é mais rápido para desenvolver
+# e o hot reload funciona sem sofrimento. Veja o README.
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: speedmilhas-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-speedmilhas}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-speedmilhas}
+      POSTGRES_DB: ${POSTGRES_DB:-speedmilhas}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      # Atenção: a imagem do Postgres 18 usa PGDATA=/var/lib/postgresql/18/docker
+      # e declara o volume em /var/lib/postgresql. Montar /var/lib/postgresql/data
+      # (o caminho das versões anteriores) faria os dados NÃO persistirem.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-speedmilhas} -d ${POSTGRES_DB:-speedmilhas}']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  mock-suppliers:
+    build: ./mock-suppliers
+    container_name: speedmilhas-mock-suppliers
+    restart: unless-stopped
+    ports:
+      - '${MOCK_SUPPLIERS_PORT:-4000}:4000'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+
+volumes:
+  postgres-data:

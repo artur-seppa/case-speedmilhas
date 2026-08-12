@@ -1,0 +1,11 @@
+// Modelar o banco é parte do desafio — por isso este arquivo só tem a
+// configuração, sem nenhum model. Pense no que você precisa persistir.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}

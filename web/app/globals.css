@@ -1,0 +1,10 @@
+/* Tailwind v4: um único import, sem as três diretivas @tailwind da v3.
+ *
+ * Se você quiser customizar (cores, fontes, espaçamentos), o lugar é aqui,
+ * num bloco @theme — não em arquivo de config JS:
+ *
+ *   @theme {
+ *     --color-brand: #0b5fff;
+ *   }
+ */
+@import 'tailwindcss';
