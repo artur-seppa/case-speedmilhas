@@ -2,6 +2,7 @@
 // Se você preferir @nestjs/config, troque — não temos preferência.
 import 'dotenv/config';
 import 'reflect-metadata';
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from './app.module';
@@ -12,6 +13,7 @@ async function bootstrap(): Promise<void> {
   // O `web` roda em outra porta, então precisa de CORS. Já vem ligado para você
   // não perder tempo com isso.
   app.enableCors();
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
 
   // A porta vem de env para ser possível subir duas instâncias em paralelo
   // (você vai precisar disso no RF2): PORT=3000 e PORT=3010, por exemplo.
