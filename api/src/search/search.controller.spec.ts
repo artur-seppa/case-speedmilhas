@@ -45,4 +45,13 @@ describe('SearchController', () => {
     await expect(controller.search(dto)).rejects.toBeInstanceOf(BadRequestException);
     expect(execute).not.toHaveBeenCalled();
   });
+
+  it('rejeita data passada sem chamar o use-case', async () => {
+    const execute = jest.fn();
+    const controller = await buildController(execute);
+    const dto: SearchRequestDto = { origin: 'GRU', destination: 'GIG', date: '2020-01-01' };
+
+    await expect(controller.search(dto)).rejects.toBeInstanceOf(BadRequestException);
+    expect(execute).not.toHaveBeenCalled();
+  });
 });

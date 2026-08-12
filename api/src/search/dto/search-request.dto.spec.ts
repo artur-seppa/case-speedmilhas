@@ -23,4 +23,9 @@ describe('SearchRequestDto', () => {
     const errors = await validateInput({ origin: 'GRU', destination: 'GIG', date: '15/08/2026' });
     expect(errors.some((e) => e.property === 'date')).toBe(true);
   });
+
+  it('rejeita data com formato correto mas inexistente no calendário', async () => {
+    const errors = await validateInput({ origin: 'GRU', destination: 'GIG', date: '2026-13-45' });
+    expect(errors.some((e) => e.property === 'date')).toBe(true);
+  });
 });
