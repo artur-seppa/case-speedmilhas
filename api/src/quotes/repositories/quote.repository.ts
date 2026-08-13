@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
+import { ulid } from 'ulid';
 import Redis from 'ioredis';
 
 import { NormalizedOffer } from '../../suppliers/normalized-offer';
@@ -16,7 +16,7 @@ export class RedisQuoteRepository implements QuoteRepository {
   constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
 
   async save(offer: NormalizedOffer, ttlSeconds: number): Promise<string> {
-    const quoteId = randomUUID();
+    const quoteId = ulid();
     await this.redis.set(`quote:${quoteId}`, JSON.stringify(offer), 'EX', ttlSeconds);
     return quoteId;
   }

@@ -29,7 +29,8 @@
     "dotenv": "^17.4.2",
     "ioredis": "^6.0.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.2"
+    "rxjs": "^7.8.2",
+    "ulid": "^3.0.2"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.24",
