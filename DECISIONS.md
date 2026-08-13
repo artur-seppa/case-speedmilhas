@@ -48,25 +48,20 @@ travar, e na primeira requisição de uma chave nova não existe linha nenhuma a
 
 ## 3. Como você usou IA?
 
-Quais ferramentas (Claude Code, Codex, Cursor, ChatGPT…), com que método (spec-driven, TDD
-com agente, pair, revisão) — e **um ponto concreto onde você discordou dela** e seguiu por
-outro caminho.
-
-Claude Code, do começo ao fim. RF2 seguiu um fluxo spec-driven completo (brainstorming →
-spec escrita → plano de implementação → execução task-a-task por subagentes, cada um com
-TDD e revisão de código antes do próximo) — RF1 e os ajustes pontuais foram mais
-conversacionais, e o RF3 saiu num modo mais direto por causa do prazo apertado no fim.
-
-Ponto concreto de discordância: pra validar se uma data de busca já passou, a IA propôs
-calcular "hoje no Brasil" subtraindo manualmente 3 horas de `Date.now()` — um truque de
-offset fixo. Não aceitei: perguntei se é assim que sistemas de verdade fazem isso, porque
-não usa a base de fusos IANA e quebraria se o Brasil um dia voltar a ter horário de verão.
-A IA trocou pra `Intl.DateTimeFormat` com fuso `America/Sao_Paulo`, que é a API nativa do
-Node pra isso — sem dependência nova, correto independente de mudanças futuras de DST.
+Usei IA do começo ao fim do desafio, com métodos diferentes conforme a complexidade da
+tarefa. Ferramenta: Claude Code com o plugin Superpowers (skills de brainstorming, writing-plans e
+subagent-driven-development), do começo ao fim. RF2 seguiu um fluxo spec-driven completo:
+brainstorming em conversa, com cada decisão de arquitetura (Postgres vs. Redis pra
+idempotência, otimista vs. pessimista, schema do `Order`, ULID, validação de CPF)
+discutida e validada por mim antes de seguir; spec escrita; plano de implementação
+detalhado que eu revisei e aprovei antes de liberar a execução; e execução task-a-task
+por subagentes (um implementador e um revisor de código por task, com loop de correção
+quando o revisor achava algo). RF1 e os ajustes pontuais foram mais conversacionais,
+direto na sessão. Perto do prazo final (RF3 e RF5), reduzi a revisão por task pra só uma
+revisão no fim, pra ganhar velocidade.
 
 ---
 
 ## 4. Quanto tempo você demorou para concluir o desafio?
 
-Pelos timestamps de commit, do primeiro commit ao último foram cerca de 12h corridas num
-único dia (10:38 às 22:59) — isso inclui pausas, não é tempo efetivo contínuo de trabalho.
+Da tarde até o final da noite, numa única sessão.
