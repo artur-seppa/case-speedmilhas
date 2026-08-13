@@ -33,3 +33,25 @@ describe('RedisQuoteRepository', () => {
     expect(first).not.toBe(second);
   });
 });
+
+describe('RedisQuoteRepository#find', () => {
+  it('devolve a oferta salva', async () => {
+    const redis = new RedisMock() as unknown as Redis;
+    const repo = new RedisQuoteRepository(redis);
+    const offer = buildNormalizedOffer({ miles: 30000 });
+    const quoteId = await repo.save(offer, 900);
+
+    const found = await repo.find(quoteId);
+
+    expect(found).toEqual(offer);
+  });
+
+  it('devolve null quando a quote não existe ou expirou', async () => {
+    const redis = new RedisMock() as unknown as Redis;
+    const repo = new RedisQuoteRepository(redis);
+
+    const found = await repo.find('quote-inexistente');
+
+    expect(found).toBeNull();
+  });
+});

@@ -7,6 +7,7 @@ import { REDIS_CLIENT } from '../../common/redis/redis.provider';
 
 export interface QuoteRepository {
   save(offer: NormalizedOffer, ttlSeconds: number): Promise<string>;
+  find(quoteId: string): Promise<NormalizedOffer | null>;
 }
 
 export const QUOTE_REPOSITORY = Symbol('QUOTE_REPOSITORY');
@@ -19,5 +20,10 @@ export class RedisQuoteRepository implements QuoteRepository {
     const quoteId = ulid();
     await this.redis.set(`quote:${quoteId}`, JSON.stringify(offer), 'EX', ttlSeconds);
     return quoteId;
+  }
+
+  async find(quoteId: string): Promise<NormalizedOffer | null> {
+    const raw = await this.redis.get(`quote:${quoteId}`);
+    return raw ? (JSON.parse(raw) as NormalizedOffer) : null;
   }
 }

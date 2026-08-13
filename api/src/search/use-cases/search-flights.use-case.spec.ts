@@ -26,6 +26,10 @@ class FakeQuoteRepository implements QuoteRepository {
     this.saved.push(offer);
     return `quote-${this.counter}`;
   }
+
+  async find(): Promise<NormalizedOffer | null> {
+    return null;
+  }
 }
 
 const query: SupplierSearchQuery = { origin: 'GRU', destination: 'GIG', date: '2026-08-15' };
