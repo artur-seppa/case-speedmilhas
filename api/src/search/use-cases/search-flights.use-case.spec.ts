@@ -3,8 +3,9 @@ import { SupplierTimeoutError } from '../../common/http/fetch-with-timeout';
 import { NormalizedOffer, SupplierName } from '../../suppliers/normalized-offer';
 import { SupplierClient, SupplierSearchQuery } from '../../suppliers/ports/supplier-client.port';
 import { QuoteRepository } from '../../quotes/repositories/quote.repository';
+import { SearchCacheRepository } from '../repositories/search-cache.repository';
 import { buildNormalizedOffer } from '../../../test/factories/offer.factory';
-import { SearchFlightsUseCase } from './search-flights.use-case';
+import { SearchFlightsUseCase, SearchFlightsResult } from './search-flights.use-case';
 
 class FakeSupplierClient implements SupplierClient {
   constructor(
@@ -32,16 +33,33 @@ class FakeQuoteRepository implements QuoteRepository {
   }
 }
 
+class FakeSearchCacheRepository implements SearchCacheRepository {
+  private store = new Map<string, SearchFlightsResult>();
+
+  async get(query: SupplierSearchQuery): Promise<SearchFlightsResult | null> {
+    return this.store.get(this.keyFor(query)) ?? null;
+  }
+
+  async set(query: SupplierSearchQuery, result: SearchFlightsResult): Promise<void> {
+    this.store.set(this.keyFor(query), result);
+  }
+
+  private keyFor(query: SupplierSearchQuery): string {
+    return `${query.origin}:${query.destination}:${query.date}`;
+  }
+}
+
 const query: SupplierSearchQuery = { origin: 'GRU', destination: 'GIG', date: '2026-08-15' };
 
 function buildUseCase(clients: {
   a: SupplierClient;
   b: SupplierClient;
   c: SupplierClient;
-}): { useCase: SearchFlightsUseCase; quotes: FakeQuoteRepository } {
+}): { useCase: SearchFlightsUseCase; quotes: FakeQuoteRepository; cache: FakeSearchCacheRepository } {
   const quotes = new FakeQuoteRepository();
-  const useCase = new SearchFlightsUseCase(clients.a, clients.b, clients.c, quotes);
-  return { useCase, quotes };
+  const cache = new FakeSearchCacheRepository();
+  const useCase = new SearchFlightsUseCase(clients.a, clients.b, clients.c, quotes, cache);
+  return { useCase, quotes, cache };
 }
 
 describe('SearchFlightsUseCase', () => {
@@ -134,11 +152,62 @@ describe('SearchFlightsUseCase', () => {
       new FakeSupplierClient('supplier-b', async () => [buildNormalizedOffer({ supplier: 'supplier-b', miles: 10000 })]),
       new FakeSupplierClient('supplier-c', async () => []),
       quotes,
+      new FakeSearchCacheRepository(),
     );
 
     const result = await useCase.execute(query);
 
     expect(result.offers.map((o) => o.miles)).toEqual([10000]);
     expect(result.suppliers['supplier-a']).toEqual({ status: 'ok' });
+  });
+
+  it('na segunda busca idêntica, devolve do cache sem chamar os fornecedores de novo', async () => {
+    const supplierA = jest.fn(async () => [buildNormalizedOffer({ supplier: 'supplier-a', miles: 20000 })]);
+    const { useCase } = buildUseCase({
+      a: new FakeSupplierClient('supplier-a', supplierA),
+      b: new FakeSupplierClient('supplier-b', async () => []),
+      c: new FakeSupplierClient('supplier-c', async () => []),
+    });
+
+    await useCase.execute(query);
+    const second = await useCase.execute(query);
+
+    expect(supplierA).toHaveBeenCalledTimes(1);
+    expect(second.offers.map((o) => o.miles)).toEqual([20000]);
+  });
+
+  it('não usa cache pra uma busca com origem/destino/data diferente', async () => {
+    const supplierA = jest.fn(async () => [buildNormalizedOffer({ supplier: 'supplier-a', miles: 20000 })]);
+    const { useCase } = buildUseCase({
+      a: new FakeSupplierClient('supplier-a', supplierA),
+      b: new FakeSupplierClient('supplier-b', async () => []),
+      c: new FakeSupplierClient('supplier-c', async () => []),
+    });
+
+    await useCase.execute(query);
+    await useCase.execute({ ...query, destination: 'BSB' });
+
+    expect(supplierA).toHaveBeenCalledTimes(2);
+  });
+
+  it('não cacheia resultado parcial, pra tentar de novo na próxima busca', async () => {
+    let attempt = 0;
+    const supplierB = jest.fn(async () => {
+      attempt += 1;
+      if (attempt === 1) throw new SupplierTimeoutError('timeout');
+      return [buildNormalizedOffer({ supplier: 'supplier-b', miles: 10000 })];
+    });
+    const { useCase } = buildUseCase({
+      a: new FakeSupplierClient('supplier-a', async () => []),
+      b: new FakeSupplierClient('supplier-b', supplierB),
+      c: new FakeSupplierClient('supplier-c', async () => []),
+    });
+
+    const first = await useCase.execute(query);
+    const second = await useCase.execute(query);
+
+    expect(first.partial).toBe(true);
+    expect(supplierB).toHaveBeenCalledTimes(2);
+    expect(second.partial).toBe(false);
   });
 });
