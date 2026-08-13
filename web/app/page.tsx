@@ -1,11 +1,14 @@
+import { SearchPage } from '../features/search/SearchPage';
+
 export default function Home() {
   return (
-    <main className="mx-auto max-w-2xl p-8">
-      <h1 className="text-2xl font-semibold">Speed Milhas — Desafio Técnico</h1>
-      <p className="mt-2 text-slate-600">
-        Se você está lendo isto <em>com margem e cor</em>, o front subiu e o Tailwind está
-        funcionando. A tela de busca é sua (RF3).
-      </p>
+    <main className="mx-auto max-w-3xl px-6 py-10">
+      <header className="mb-8">
+        <h1 className="font-(family-name:--font-display) text-3xl text-(--color-ink)">Speed Milhas</h1>
+        <p className="mt-1 text-sm text-(--color-muted)">Busca de passagens por milhas entre três fornecedores.</p>
+      </header>
+
+      <SearchPage />
     </main>
   );
 }
