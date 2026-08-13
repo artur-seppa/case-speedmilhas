@@ -9,3 +9,16 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model Order {
+  id             String   @id @default(ulid())
+  quoteId        String
+  supplier       String
+  carrier        String
+  miles          Int
+  taxesBrl       Float
+  passengerName  String
+  passengerCpf   String
+  idempotencyKey String   @unique
+  createdAt      DateTime @default(now())
+}
