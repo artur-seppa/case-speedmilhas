@@ -71,7 +71,7 @@ export class SearchFlightsUseCase {
       }
     });
 
-    rawOffers.sort((a, b) => a.miles - b.miles);
+    rawOffers.sort((a, b) => a.miles - b.miles || a.taxesBrl - b.taxesBrl);
 
     const persisted = await Promise.all(
       rawOffers.map(async (offer): Promise<Quote | null> => {

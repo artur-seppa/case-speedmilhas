@@ -83,6 +83,23 @@ describe('SearchFlightsUseCase', () => {
     expect(result.tookMs).toBeGreaterThanOrEqual(0);
   });
 
+  it('em empate de milhas, desempata pela menor taxa', async () => {
+    const { useCase } = buildUseCase({
+      a: new FakeSupplierClient('supplier-a', async () => [
+        buildNormalizedOffer({ supplier: 'supplier-a', miles: 20000, taxesBrl: 148.8 }),
+      ]),
+      b: new FakeSupplierClient('supplier-b', async () => [
+        buildNormalizedOffer({ supplier: 'supplier-b', miles: 20000, taxesBrl: 175.12 }),
+        buildNormalizedOffer({ supplier: 'supplier-b', miles: 20000, taxesBrl: 145.66 }),
+      ]),
+      c: new FakeSupplierClient('supplier-c', async () => []),
+    });
+
+    const result = await useCase.execute(query);
+
+    expect(result.offers.map((o) => o.taxesBrl)).toEqual([145.66, 148.8, 175.12]);
+  });
+
   it('marca partial=true e reason=timeout quando um fornecedor estoura o deadline', async () => {
     const { useCase } = buildUseCase({
       a: new FakeSupplierClient('supplier-a', async () => [buildNormalizedOffer({ supplier: 'supplier-a', miles: 20000 })]),
